@@ -8,15 +8,27 @@ datasource db {
 }
 
 enum TenantType {
-  BARBERSHOP HAIRDRESSER SPA NAILS AESTHETICS CLINIC
+  BARBERSHOP
+  HAIRDRESSER
+  SPA
+  NAILS
+  AESTHETICS
+  CLINIC
 }
 
 enum UserRole {
-  CUSTOMER MANAGER ADMIN SUPER_ADMIN
+  CUSTOMER
+  MANAGER
+  ADMIN
+  SUPER_ADMIN
 }
 
 enum AppointmentStatus {
-  SCHEDULED CONFIRMED CANCELLED COMPLETED NO_SHOW
+  SCHEDULED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
 }
 
 model Tenant {
@@ -41,7 +53,9 @@ model Tenant {
   reviews       Review[]
   subscription  TenantSubscription?
   notifications NotificationLog[]
-  @@index([type]) @@index([name]) @@index([slug])
+  @@index([type])
+  @@index([name])
+  @@index([slug])
 }
 
 model User {
@@ -59,7 +73,8 @@ model User {
   updatedAt DateTime @updatedAt
   customerAppointments Appointment[] @relation("customerAppointments")
   managedReviews       Review[]      @relation("managerReviews")
-  @@index([email]) @@index([tenantId])
+  @@index([email])
+  @@index([tenantId])
 }
 
 model Professional {
@@ -95,7 +110,8 @@ model Service {
   updatedAt   DateTime @updatedAt
   appointments       Appointment[]
   serviceProfessionals ServiceProfessional[]
-  @@index([tenantId]) @@index([category])
+  @@index([tenantId])
+  @@index([category])
 }
 
 model ServiceProfessional {
@@ -151,7 +167,10 @@ model Appointment {
   cancelReason   String?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
-  @@index([tenantId]) @@index([professionalId, date]) @@index([customerId]) @@index([date])
+  @@index([tenantId])
+  @@index([professionalId, date])
+  @@index([customerId])
+  @@index([date])
 }
 
 model SubscriptionPlan {
@@ -182,7 +201,8 @@ model TenantSubscription {
   whatsappRemaining Int      @default(0)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
-  @@index([tenantId]) @@index([planId])
+  @@index([tenantId])
+  @@index([planId])
 }
 
 model NotificationLog {
