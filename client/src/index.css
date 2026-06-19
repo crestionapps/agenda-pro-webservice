@@ -1,0 +1,8 @@
+@tailwind base; @tailwind components; @tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+body { @apply bg-gray-50 text-gray-900 antialiased; font-family: 'Inter', system-ui, sans-serif; }
+@layer components {
+  .btn-primary { @apply bg-coral-500 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-coral-600 transition shadow-md hover:shadow-lg; }
+  .card { @apply bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition; }
+  .card-hover { @apply hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200; }
+}

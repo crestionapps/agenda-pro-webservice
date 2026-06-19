@@ -1,0 +1,211 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TenantType {
+  BARBERSHOP HAIRDRESSER SPA NAILS AESTHETICS CLINIC
+}
+
+enum UserRole {
+  CUSTOMER MANAGER ADMIN SUPER_ADMIN
+}
+
+enum AppointmentStatus {
+  SCHEDULED CONFIRMED CANCELLED COMPLETED NO_SHOW
+}
+
+model Tenant {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  type        TenantType
+  description String?
+  address     String?
+  phone       String?
+  email       String?
+  logo        String?
+  coverImage  String?
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  users         User[]
+  professionals Professional[]
+  services      Service[]
+  appointments  Appointment[]
+  businessHours BusinessHour[]
+  reviews       Review[]
+  subscription  TenantSubscription?
+  notifications NotificationLog[]
+  @@index([type]) @@index([name]) @@index([slug])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  phone     String?
+  avatar    String?
+  role      UserRole @default(CUSTOMER)
+  tenantId  String?
+  tenant    Tenant?  @relation(fields: [tenantId], references: [id])
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  customerAppointments Appointment[] @relation("customerAppointments")
+  managedReviews       Review[]      @relation("managerReviews")
+  @@index([email]) @@index([tenantId])
+}
+
+model Professional {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  bio         String?
+  photo       String?
+  specialties String[]
+  isActive    Boolean  @default(true)
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  availabilities     Availability[]
+  appointments       Appointment[]
+  serviceProfessionals ServiceProfessional[]
+  @@index([tenantId])
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String?
+  duration    Int
+  price       Float
+  isActive    Boolean  @default(true)
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  appointments       Appointment[]
+  serviceProfessionals ServiceProfessional[]
+  @@index([tenantId]) @@index([category])
+}
+
+model ServiceProfessional {
+  serviceId      String
+  service        Service      @relation(fields: [serviceId], references: [id])
+  professionalId String
+  professional   Professional @relation(fields: [professionalId], references: [id])
+  createdAt      DateTime     @default(now())
+  @@id([serviceId, professionalId])
+}
+
+model Availability {
+  id             String   @id @default(cuid())
+  professionalId String
+  professional   Professional @relation(fields: [professionalId], references: [id])
+  dayOfWeek      Int
+  startTime      String
+  endTime        String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  @@unique([professionalId, dayOfWeek])
+}
+
+model BusinessHour {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  dayOfWeek Int
+  openTime  String
+  closeTime String
+  isOpen    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([tenantId, dayOfWeek])
+}
+
+model Appointment {
+  id             String            @id @default(cuid())
+  tenantId       String
+  tenant         Tenant            @relation(fields: [tenantId], references: [id])
+  customerId     String
+  customer       User              @relation("customerAppointments", fields: [customerId], references: [id])
+  professionalId String
+  professional   Professional      @relation(fields: [professionalId], references: [id])
+  serviceId      String
+  service        Service           @relation(fields: [serviceId], references: [id])
+  date           DateTime
+  startTime      String
+  endTime        String
+  status         AppointmentStatus @default(SCHEDULED)
+  notes          String?
+  cancelledAt    DateTime?
+  cancelReason   String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  @@index([tenantId]) @@index([professionalId, date]) @@index([customerId]) @@index([date])
+}
+
+model SubscriptionPlan {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  price        Float
+  smsLimit     Int      @default(0)
+  emailLimit   Int      @default(0)
+  whatsappLimit Int     @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  tenantSubscriptions TenantSubscription[]
+}
+
+model TenantSubscription {
+  id                String   @id @default(cuid())
+  tenantId          String   @unique
+  tenant            Tenant   @relation(fields: [tenantId], references: [id])
+  planId            String
+  plan              SubscriptionPlan @relation(fields: [planId], references: [id])
+  startDate         DateTime @default(now())
+  endDate           DateTime?
+  isActive          Boolean  @default(true)
+  smsRemaining      Int      @default(0)
+  emailRemaining    Int      @default(0)
+  whatsappRemaining Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  @@index([tenantId]) @@index([planId])
+}
+
+model NotificationLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  type      String
+  recipient String
+  status    String   @default("SENT")
+  createdAt DateTime @default(now())
+  @@index([tenantId])
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  customerId  String
+  customer    User     @relation("managerReviews", fields: [customerId], references: [id])
+  rating      Int
+  comment     String?
+  managerReply String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([tenantId])
+}

@@ -1,0 +1,21 @@
+import { useState, useEffect } from 'react'; import { api } from '../lib/api'; import { useAuth } from '../contexts/AuthContext';
+export default function BusinessAdminDashboard() {
+  const { user } = useAuth(); const tid = user?.tenantId;
+  const [professionals, setProfessionals] = useState<any[]>([]); const [services, setServices] = useState<any[]>([]); const [stats, setStats] = useState<any>(null);
+  const [tab, setTab] = useState<'stats' | 'profissionais' | 'servicos'>('stats'); const [loading, setLoading] = useState(true);
+  const load = async () => { if (!tid) return; setLoading(true); const [p, s, st] = await Promise.all([api.get(`/api/professionals/tenant/${tid}`), api.get(`/api/services/tenant/${tid}`), api.get(`/api/tenants/${tid}/stats`)]); setProfessionals(p); setServices(s); setStats(st); setLoading(false); };
+  useEffect(() => { load(); }, [tid]);
+  const addP = async () => { const n = prompt('Nome:'); if (!n) return; await api.post(`/api/professionals/tenant/${tid}`, { name: n }); load(); };
+  const addS = async () => { const n = prompt('Nome:'); if (!n) return; const d = parseInt(prompt('Duração (min):') || '30'); const p = parseFloat(prompt('Preço (€):') || '0'); await api.post(`/api/services/tenant/${tid}`, { name: n, duration: d, price: p }); load(); };
+  const toggleP = async (id: string, a: boolean) => { a ? await api.delete(`/api/professionals/${id}`) : await api.put(`/api/professionals/${id}`, { isActive: true }); load(); };
+  const toggleS = async (id: string, a: boolean) => { a ? await api.delete(`/api/services/${id}`) : await api.put(`/api/services/${id}`, { isActive: true }); load(); };
+  if (loading) return <div className="text-center py-20">A carregar...</div>; if (!tid) return <div className="text-center py-20">Sem negócio associado</div>;
+  return (<div className="max-w-5xl mx-auto px-4 py-8"><h1 className="text-2xl font-bold mb-6">Administração do Negócio</h1>
+    <div className="flex gap-2 mb-6">{(['stats', 'profissionais', 'servicos'] as const).map(t => <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-lg text-sm ${tab === t ? 'bg-coral-500 text-white' : 'bg-white border text-gray-600'}`}>{t === 'stats' ? 'Estatísticas' : t === 'profissionais' ? 'Profissionais' : 'Serviços'}</button>)}</div>
+    {tab === 'stats' && stats && <div className="grid grid-cols-3 gap-4">{['totalAppointments', 'monthlyAppointments', 'totalProfessionals'].map(k => <div key={k} className="card p-6"><p className="text-3xl font-bold text-coral-500">{(stats as any)[k]}</p><p className="text-sm text-gray-500">{k === 'totalAppointments' ? 'Total' : k === 'monthlyAppointments' ? 'Este mês' : 'Profissionais'}</p></div>)}</div>}
+    {tab === 'profissionais' && <div className="card p-6"><div className="flex justify-between mb-4"><h2 className="font-semibold">Profissionais</h2><button onClick={addP} className="bg-coral-500 text-white px-4 py-2 rounded-lg text-sm">+ Adicionar</button></div>
+    <table className="w-full text-sm">{professionals.map(p => <tr key={p.id} className="border-b"><td className="py-3 font-medium">{p.name}</td><td><span className={`px-2 py-0.5 rounded-full text-xs ${p.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{p.isActive ? 'Ativo' : 'Inativo'}</span></td><td><button onClick={() => toggleP(p.id, p.isActive)} className="text-sm text-red-500">{p.isActive ? 'Desativar' : 'Ativar'}</button></td></tr>)}</table></div>}
+    {tab === 'servicos' && <div className="card p-6"><div className="flex justify-between mb-4"><h2 className="font-semibold">Serviços</h2><button onClick={addS} className="bg-coral-500 text-white px-4 py-2 rounded-lg text-sm">+ Adicionar</button></div>
+    <table className="w-full text-sm">{services.map(s => <tr key={s.id} className="border-b"><td className="py-3 font-medium">{s.name}</td><td>{s.duration} min</td><td className="font-medium text-coral-500">{s.price.toFixed(2)}€</td><td><span className={`px-2 py-0.5 rounded-full text-xs ${s.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{s.isActive ? 'Ativo' : 'Inativo'}</span></td><td><button onClick={() => toggleS(s.id, s.isActive)} className="text-sm text-red-500">{s.isActive ? 'Desativar' : 'Ativar'}</button></td></tr>)}</table></div>}
+  </div>);
+}
