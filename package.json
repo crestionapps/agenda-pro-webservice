@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "cd client && npm install && npm run build && cd .. && prisma generate && tsc",
+    "build": "npm --prefix client install && npm --prefix client run build && prisma generate && tsc",
     "start": "node dist/server.js",
     "dev": "tsx src/server.ts",
     "seed": "tsx src/seed.ts",
