@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "cd client && npm install && npm run build && cd .. && npx prisma generate && npx tsc",
+    "build": "cd client && npm install && npm run build && cd .. && prisma generate && tsc",
     "start": "node dist/server.js",
-    "dev": "npx tsx src/server.ts",
-    "seed": "npx tsx src/seed.ts",
-    "db:push": "npx prisma db push"
+    "dev": "tsx src/server.ts",
+    "seed": "tsx src/seed.ts",
+    "db:push": "prisma db push"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
